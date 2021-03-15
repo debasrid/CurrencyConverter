@@ -1,84 +1,127 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import CurrencyAddButton from './CurrencyAddButton';
 import CurrencyInput from './CurrencyInput';
+import DateSelection from './DateSelection';
 
-const DATA_URL = 'https://api.exchangeratesapi.io/latest'
+const DATA_URL = 'https://api.exchangeratesapi.io'
 
 function App() {
 
-  const [currencyList, setCurrencyList]= useState([])
+  const [currencyList, setCurrencyList] = useState([])
   const [fromCurrency, setFromCurrency] = useState()
   const [toCurrency, setToCurrency] = useState()
-  const [exchangeRate,setExchangeRate] = useState()
+  const [exchangeRate, setExchangeRate] = useState()
   const [amount, setAmount] = useState(1)
   const [amountInputbox, setAmountInputBox] = useState(true)
-  
-let  fromAmountValue, toAmountValue, fromInputLabel, toInputLabel
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
+  const [addCurrencyClicked, setAddCurrencyClicked] = useState(false)
 
-if(amountInputbox){
-  fromAmountValue = amount 
-  toAmountValue = (amount*exchangeRate).toFixed(2)
-  fromInputLabel = 'Input Amount'
-  toInputLabel = 'Output Amount'
-}
-else{
-  toAmountValue = amount
-  fromAmountValue = (amount/exchangeRate).toFixed(2)
-  fromInputLabel = 'Output Amount'
-  toInputLabel = 'Input Amount'
-}
+  let fromAmountValue, toAmountValue, fromInputLabel, toInputLabel
+
+  if (amountInputbox) {
+    fromAmountValue = amount
+    toAmountValue = (amount * exchangeRate).toFixed(2)
+    fromInputLabel = 'Input Amount'
+    toInputLabel = 'Output Amount'
+  }
+  else {
+    toAmountValue = amount
+    fromAmountValue = (amount / exchangeRate).toFixed(2)
+    fromInputLabel = 'Output Amount'
+    toInputLabel = 'Input Amount'
+  }
+
   
+
 
 
   useEffect(() => {
-   fetch(DATA_URL)
-   .then(res => res.json())
-   .then(data=>{ 
-     const firstBaseCurrency = Object.keys(data.rates)[0]
-     setCurrencyList([data.base, ...Object.keys(data.rates)])
-     setFromCurrency(data.base)
-     setToCurrency(firstBaseCurrency)
-     setExchangeRate(data.rates[firstBaseCurrency])
-    })
+    fetch(`${DATA_URL}/latest`)
+      .then(res => res.json())
+      .then(data => {
+        const firstBaseCurrency = Object.keys(data.rates)[0]
+
+        setCurrencyList([data.base, ...Object.keys(data.rates)])
+        setFromCurrency(data.base)
+        setToCurrency(firstBaseCurrency)
+        setExchangeRate(data.rates[firstBaseCurrency])
+      })
   }, [])
 
-  useEffect(() =>{
-if(fromCurrency!=null && toCurrency!=null){
-  fetch(`${DATA_URL}?base=${fromCurrency}&symbols=${toCurrency}`)
-  .then(res => res.json())
-  .then(data => setExchangeRate(data.rates[toCurrency]))
-}
-  },[fromCurrency, toCurrency])
+  useEffect(() => {
+    if (fromCurrency != null && toCurrency != null) {
+      fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
+        .then(res => res.json())
+        .then(data => setExchangeRate(data.rates[toCurrency]))
+    }
+  }, [fromCurrency, toCurrency, selectedDate])
 
-  function fromAmountChangeHandler(e){
+  function handleFromAmountChange(e) {
     setAmount(e.target.value)
     setAmountInputBox(true)
   }
 
-  function toAmountChangeHandler(e){
+  function handleToAmountChange(e) {
     setAmount(e.target.value)
     setAmountInputBox(false)
   }
 
+  function handleAddCurrencyClicked(){
+  
+   setAddCurrencyClicked(true)
+  }
+
+
+
   return (
-  <>
-   <h1>Currency Converter</h1>
-   <CurrencyInput currencyList={currencyList}
-   selectedCurrency={fromCurrency}
-   onChangeCurrencyInput = {e => setFromCurrency(e.target.value)}
-   amount = {fromAmountValue}
-   onChangeInputAmount = { fromAmountChangeHandler}
-   currencyLabel = {fromInputLabel}
-   />
-   <div>to</div>
-   <CurrencyInput currencyList={currencyList}
-   selectedCurrency={toCurrency}
-   onChangeCurrencyInput = { e=> setToCurrency(e.target.value)}
-   amount = {toAmountValue}
-   onChangeInputAmount = { toAmountChangeHandler}
-   currencyLabel = {toInputLabel}
-   />
-   </>
+    <>
+    < div className="content">
+      <h1>Currency Converter</h1>
+
+        <DateSelection selectedDate={selectedDate}
+             onChangeDateInput={e => setSelectedDate(e.target.value)
+              }
+        />
+        
+        <CurrencyInput currencyList={currencyList}
+             selectedCurrency={fromCurrency}
+             onChangeCurrencyInput={e => setFromCurrency(e.target.value)}
+             amount={fromAmountValue}
+             onChangeInputAmount={handleFromAmountChange}
+             currencyLabel={fromInputLabel}
+        />
+     
+     
+        <CurrencyInput currencyList={currencyList}
+          selectedCurrency={toCurrency}
+          onChangeCurrencyInput={e => setToCurrency(e.target.value)}
+          amount={toAmountValue}
+          onChangeInputAmount={handleToAmountChange}
+          currencyLabel={toInputLabel}
+        />
+
+     {
+      addCurrencyClicked?
+      <CurrencyInput currencyList={currencyList}
+          selectedCurrency={toCurrency}
+          onChangeCurrencyInput={e => setToCurrency(e.target.value)}
+          amount={toAmountValue}
+          onChangeInputAmount={handleToAmountChange}
+          currencyLabel={toInputLabel}
+        />
+        :
+        <div></div>
+     }
+ 
+
+        <CurrencyAddButton 
+        onClickedCurrencyBtn = {handleAddCurrencyClicked}        
+        />
+        
+      
+    </div>
+    </>
   );
 }
 

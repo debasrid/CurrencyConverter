@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 export default function CurrencyInput(props) {
  const{
@@ -11,7 +11,7 @@ export default function CurrencyInput(props) {
     } = props
     
     return (
-        <div>
+        <div className="currency-section">
             <label>{currencyLabel}</label>
             <input type = "number" min = "0" className = "input" value = {amount} onChange = {onChangeInputAmount}/>
             
