@@ -9,13 +9,13 @@ const DATA_URL = 'https://api.exchangeratesapi.io'
 function App() {
 
   const [currencyList, setCurrencyList] = useState([])
+  const [currencyComponentList, setCurrencyComponentList] = useState([])
   const [fromCurrency, setFromCurrency] = useState()
   const [toCurrency, setToCurrency] = useState()
   const [exchangeRate, setExchangeRate] = useState()
   const [amount, setAmount] = useState(1)
   const [amountInputbox, setAmountInputBox] = useState(true)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
-  const [addCurrencyClicked, setAddCurrencyClicked] = useState(false)
 
   let fromAmountValue, toAmountValue, fromInputLabel, toInputLabel
 
@@ -46,11 +46,12 @@ function App() {
         setFromCurrency(data.base)
         setToCurrency(firstBaseCurrency)
         setExchangeRate(data.rates[firstBaseCurrency])
+        setCurrencyComponentList([1])
       })
   }, [])
 
   useEffect(() => {
-    if (fromCurrency != null && toCurrency != null) {
+    if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
       fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
         .then(res => res.json())
         .then(data => setExchangeRate(data.rates[toCurrency]))
@@ -68,8 +69,7 @@ function App() {
   }
 
   function handleAddCurrencyClicked(){
-  
-   setAddCurrencyClicked(true)
+    setCurrencyComponentList([...currencyComponentList, currencyComponentList.length])
   }
 
 
@@ -90,28 +90,19 @@ function App() {
              amount={fromAmountValue}
              onChangeInputAmount={handleFromAmountChange}
              currencyLabel={fromInputLabel}
+             currencyKey="0"
         />
      
-     
+       { currencyComponentList.map((ccList,i) => 
         <CurrencyInput currencyList={currencyList}
           selectedCurrency={toCurrency}
           onChangeCurrencyInput={e => setToCurrency(e.target.value)}
           amount={toAmountValue}
           onChangeInputAmount={handleToAmountChange}
           currencyLabel={toInputLabel}
+          currencyKey={ccList}
         />
-
-     {
-      addCurrencyClicked?
-      <CurrencyInput currencyList={currencyList}
-          selectedCurrency={toCurrency}
-          onChangeCurrencyInput={e => setToCurrency(e.target.value)}
-          amount={toAmountValue}
-          onChangeInputAmount={handleToAmountChange}
-          currencyLabel={toInputLabel}
-        />
-        :
-        <div></div>
+       )        
      }
  
 

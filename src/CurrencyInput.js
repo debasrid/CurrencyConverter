@@ -7,11 +7,12 @@ export default function CurrencyInput(props) {
       onChangeCurrencyInput,
       amount,
       onChangeInputAmount,
-      currencyLabel
+      currencyLabel,
+      currencyKey
     } = props
     
     return (
-        <div className="currency-section">
+        <div className="currency-section" key={currencyKey}>
             <label>{currencyLabel}</label>
             <input type = "number" min = "0" className = "input" value = {amount} onChange = {onChangeInputAmount}/>
             
