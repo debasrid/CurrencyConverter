@@ -12,11 +12,11 @@ export default function CurrencyInput(props) {
     } = props
     
     return (
-        <div className="currency-section" key={currencyKey}>
+        <div className="currency-section">
             <label>{currencyLabel}</label>
             <input type = "number" min = "0" className = "input" value = {amount} onChange = {onChangeInputAmount}/>
             
-            <select value={selectedCurrency} onChange={onChangeCurrencyInput}>
+            <select value={selectedCurrency} onChange={onChangeCurrencyInput} id={currencyKey}>
                 {currencyList.map(option=>(<option key={option} value={option}>{option}</option>)
                 )}
             </select>
