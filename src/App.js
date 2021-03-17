@@ -9,53 +9,93 @@ const DATA_URL = 'https://api.exchangeratesapi.io'
 function App() {
 
   const [currencyList, setCurrencyList] = useState([])
+  const [currencyComponentList, setCurrencyComponentList] = useState([])
+  const [currencyComponentCounter, setCurrencyComponentCounter] = useState(1)
   const [fromCurrency, setFromCurrency] = useState()
-  const [toCurrency, setToCurrency] = useState()
-  const [exchangeRate, setExchangeRate] = useState()
+  const [toCurrency, setToCurrency] = useState([])
+  const [exchangeRate, setExchangeRate] = useState([1])
+  const [exchangeRateArray, setExchangeRateArray] = useState()
   const [amount, setAmount] = useState(1)
+  const [changedIndex, setChangedIndex] = useState()
   const [amountInputbox, setAmountInputBox] = useState(true)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
-  const [addCurrencyClicked, setAddCurrencyClicked] = useState(false)
 
-  let fromAmountValue, toAmountValue, fromInputLabel, toInputLabel
+  let fromAmountValue, fromInputLabel
+  let toAmountValue = []
+  let toInputLabel = []
+
 
   if (amountInputbox) {
     fromAmountValue = amount
-    toAmountValue = (amount * exchangeRate).toFixed(2)
+    currencyComponentList.map((ccList,index) => {
+      toAmountValue[index] = (amount * exchangeRate[index]).toFixed(2)
+      toInputLabel[index] = 'Output Amount'
+    })
     fromInputLabel = 'Input Amount'
-    toInputLabel = 'Output Amount'
   }
   else {
-    toAmountValue = amount
-    fromAmountValue = (amount / exchangeRate).toFixed(2)
+    fromAmountValue = (amount / exchangeRate[changedIndex]).toFixed(2)
     fromInputLabel = 'Output Amount'
-    toInputLabel = 'Input Amount'
+    toCurrency.map((tCurr,index) => {
+      toAmountValue[index] = (fromAmountValue * exchangeRateArray[tCurr]).toFixed(2)
+      toInputLabel[index] = 'Output Amount'
+    })
+    toAmountValue[changedIndex] = amount
+    toInputLabel[changedIndex] = 'Input Amount'
   }
-
   
-
-
-
   useEffect(() => {
     fetch(`${DATA_URL}/latest`)
       .then(res => res.json())
       .then(data => {
-        const firstBaseCurrency = Object.keys(data.rates)[0]
-
         setCurrencyList([data.base, ...Object.keys(data.rates)])
         setFromCurrency(data.base)
-        setToCurrency(firstBaseCurrency)
-        setExchangeRate(data.rates[firstBaseCurrency])
+        setExchangeRate([...Object.values(data.rates)])
+        setCurrencyComponentList([])
+        setExchangeRateArray(data.rates)
       })
   }, [])
 
   useEffect(() => {
-    if (fromCurrency != null && toCurrency != null) {
+    if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
       fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
         .then(res => res.json())
-        .then(data => setExchangeRate(data.rates[toCurrency]))
+        .then(data => {
+          setCurrencyList([data.base, ...Object.keys(data.rates)])
+          setExchangeRate([...Object.values(data.rates)])
+          }
+        )
     }
-  }, [fromCurrency, toCurrency, selectedDate])
+  }, [fromCurrency])
+
+  useEffect(() => {
+    if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
+      fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
+        .then(res => res.json())
+        .then(data => {
+          let newExchangeRate = [...exchangeRate]
+          newExchangeRate[changedIndex] = data.rates[toCurrency[changedIndex]]
+          setExchangeRate(newExchangeRate)
+          }
+        )
+    }
+  }, [toCurrency])
+
+  useEffect(() => {
+    if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
+      fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
+        .then(res => res.json())
+        .then(data => {
+          setExchangeRateArray(data.rates);
+          let newExchangeRate = [...exchangeRate]
+          toCurrency.map((tCurr,index)=> {
+            newExchangeRate[index] = exchangeRateArray[tCurr]
+          })
+          setExchangeRate(newExchangeRate)
+          }
+        )
+    }
+  }, [selectedDate])
 
   function handleFromAmountChange(e) {
     setAmount(e.target.value)
@@ -64,12 +104,25 @@ function App() {
 
   function handleToAmountChange(e) {
     setAmount(e.target.value)
+    setChangedIndex(e.target.id)
     setAmountInputBox(false)
   }
 
+  function handleToCurrencyChange(e) {
+    let newToCurrencyArray = [...toCurrency]
+    newToCurrencyArray[e.target.id] = e.target.value
+    setToCurrency(newToCurrencyArray)
+    let newExchangeRate = [...exchangeRate]
+    newExchangeRate[e.target.id] = exchangeRateArray[e.target.value]
+    setExchangeRate(newExchangeRate)
+    setChangedIndex(e.target.id)
+    setAmount(amount)
+  }
+
   function handleAddCurrencyClicked(){
-  
-   setAddCurrencyClicked(true)
+    setCurrencyComponentCounter(prevState => prevState + 1)
+    setCurrencyComponentList([...currencyComponentList, currencyList[currencyComponentCounter]])
+    setToCurrency([...toCurrency, currencyList[currencyComponentCounter]])
   }
 
 
@@ -90,28 +143,18 @@ function App() {
              amount={fromAmountValue}
              onChangeInputAmount={handleFromAmountChange}
              currencyLabel={fromInputLabel}
+             currencyKey="100"
         />
-     
-     
+       { currencyComponentList.map((ccList,i) => 
         <CurrencyInput currencyList={currencyList}
-          selectedCurrency={toCurrency}
-          onChangeCurrencyInput={e => setToCurrency(e.target.value)}
-          amount={toAmountValue}
+          selectedCurrency={toCurrency[i]}
+          onChangeCurrencyInput={handleToCurrencyChange}
+          amount={toAmountValue[i]}
           onChangeInputAmount={handleToAmountChange}
-          currencyLabel={toInputLabel}
+          currencyLabel={toInputLabel[i]}
+          currencyKey={i}
         />
-
-     {
-      addCurrencyClicked?
-      <CurrencyInput currencyList={currencyList}
-          selectedCurrency={toCurrency}
-          onChangeCurrencyInput={e => setToCurrency(e.target.value)}
-          amount={toAmountValue}
-          onChangeInputAmount={handleToAmountChange}
-          currencyLabel={toInputLabel}
-        />
-        :
-        <div></div>
+       )        
      }
  
 
