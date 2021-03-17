@@ -14,6 +14,7 @@ function App() {
   const [fromCurrency, setFromCurrency] = useState()
   const [toCurrency, setToCurrency] = useState([])
   const [exchangeRate, setExchangeRate] = useState([1])
+  const [exchangeRateArray, setExchangeRateArray] = useState()
   const [amount, setAmount] = useState(1)
   const [changedIndex, setChangedIndex] = useState()
   const [amountInputbox, setAmountInputBox] = useState(true)
@@ -26,17 +27,20 @@ function App() {
 
   if (amountInputbox) {
     fromAmountValue = amount
-    exchangeRate.map((eRate,index) => {
-      toAmountValue[index] = (amount * eRate).toFixed(2)
+    currencyComponentList.map((ccList,index) => {
+      toAmountValue[index] = (amount * exchangeRate[index]).toFixed(2)
       toInputLabel[index] = 'Output Amount'
     })
     fromInputLabel = 'Input Amount'
   }
   else {
-    toAmountValue[changedIndex] = amount
     fromAmountValue = (amount / exchangeRate[changedIndex]).toFixed(2)
     fromInputLabel = 'Output Amount'
-    currencyComponentList.map((componentNumber,index)=>toInputLabel[index] = 'Output Amount')
+    toCurrency.map((tCurr,index) => {
+      toAmountValue[index] = (fromAmountValue * exchangeRateArray[tCurr]).toFixed(2)
+      toInputLabel[index] = 'Output Amount'
+    })
+    toAmountValue[changedIndex] = amount
     toInputLabel[changedIndex] = 'Input Amount'
   }
   
@@ -44,13 +48,25 @@ function App() {
     fetch(`${DATA_URL}/latest`)
       .then(res => res.json())
       .then(data => {
-        const firstBaseCurrency = Object.keys(data.rates)[0]
         setCurrencyList([data.base, ...Object.keys(data.rates)])
         setFromCurrency(data.base)
         setExchangeRate([...Object.values(data.rates)])
         setCurrencyComponentList([])
+        setExchangeRateArray(data.rates)
       })
   }, [])
+
+  useEffect(() => {
+    if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
+      fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
+        .then(res => res.json())
+        .then(data => {
+          setCurrencyList([data.base, ...Object.keys(data.rates)])
+          setExchangeRate([...Object.values(data.rates)])
+          }
+        )
+    }
+  }, [fromCurrency])
 
   useEffect(() => {
     if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
@@ -63,7 +79,23 @@ function App() {
           }
         )
     }
-  }, [fromCurrency, toCurrency, selectedDate])
+  }, [toCurrency])
+
+  useEffect(() => {
+    if (fromCurrency != null && toCurrency != null && fromCurrency != toCurrency) {
+      fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${toCurrency}`)
+        .then(res => res.json())
+        .then(data => {
+          setExchangeRateArray(data.rates);
+          let newExchangeRate = [...exchangeRate]
+          toCurrency.map((tCurr,index)=> {
+            newExchangeRate[index] = exchangeRateArray[tCurr]
+          })
+          setExchangeRate(newExchangeRate)
+          }
+        )
+    }
+  }, [selectedDate])
 
   function handleFromAmountChange(e) {
     setAmount(e.target.value)
@@ -72,7 +104,19 @@ function App() {
 
   function handleToAmountChange(e) {
     setAmount(e.target.value)
+    setChangedIndex(e.target.id)
     setAmountInputBox(false)
+  }
+
+  function handleToCurrencyChange(e) {
+    let newToCurrencyArray = [...toCurrency]
+    newToCurrencyArray[e.target.id] = e.target.value
+    setToCurrency(newToCurrencyArray)
+    let newExchangeRate = [...exchangeRate]
+    newExchangeRate[e.target.id] = exchangeRateArray[e.target.value]
+    setExchangeRate(newExchangeRate)
+    setChangedIndex(e.target.id)
+    setAmount(amount)
   }
 
   function handleAddCurrencyClicked(){
@@ -99,18 +143,12 @@ function App() {
              amount={fromAmountValue}
              onChangeInputAmount={handleFromAmountChange}
              currencyLabel={fromInputLabel}
-             currencyKey="0"
+             currencyKey="100"
         />
        { currencyComponentList.map((ccList,i) => 
         <CurrencyInput currencyList={currencyList}
           selectedCurrency={toCurrency[i]}
-          onChangeCurrencyInput={e => {
-              let newToCurrencyArray = [...toCurrency]
-              newToCurrencyArray[e.target.id] = e.target.value
-              setToCurrency(newToCurrencyArray)
-              setChangedIndex(i)
-            }
-          }
+          onChangeCurrencyInput={handleToCurrencyChange}
           amount={toAmountValue[i]}
           onChangeInputAmount={handleToAmountChange}
           currencyLabel={toInputLabel[i]}
