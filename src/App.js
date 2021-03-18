@@ -52,12 +52,14 @@ function App() {
         setFromCurrency(data.base)
         setExchangeRate([...Object.values(data.rates)])
         setCurrencyComponentList([])
-        setExchangeRateArray(data.rates)
+        let newExchangeRateArray = data.rates
+        newExchangeRateArray["EUR"] = "1"
+        setExchangeRateArray(newExchangeRateArray)
       })
   }, [])
 
   useEffect(() => {
-    if (fromCurrency != null && toCurrency != null ) {
+    if (fromCurrency != null && fromCurrency.length != 0 && toCurrency != null && toCurrency.length != 0 ) {
       let fetchCurrency = []
       toCurrency.map((tCurr,index) => {
         if(tCurr!==fromCurrency)
@@ -66,14 +68,12 @@ function App() {
       fetch(`${DATA_URL}/${selectedDate}?base=${fromCurrency}&symbols=${fetchCurrency}`)
         .then(res => res.json())
         .then(data => {
-          //setCurrencyList([data.base, ...Object.keys(data.rates)])
           let newExchangeRate = [...exchangeRate]
           toCurrency.map((tCurr,index) => {
             newExchangeRate[index] = data.rates[tCurr]
             if(tCurr===fromCurrency)
               newExchangeRate[index] = 1
           })
-          console.log("***********"+newExchangeRate)
           setExchangeRate(newExchangeRate)
         }
         )
@@ -136,7 +136,6 @@ function App() {
     newToCurrencyArray[e.target.id] = e.target.value
     setToCurrency(newToCurrencyArray)
     setChangedIndex(e.target.id)
-    console.log("ID: "+e.target.id+" value: "+e.target.value)
     setAmount(amount)
   }
 
