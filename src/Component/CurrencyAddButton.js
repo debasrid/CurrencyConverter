@@ -1,3 +1,9 @@
+/**
+ * Reusable button component for adding Currency.
+ *
+ * @version 1.0.1
+ * @author [Debasri Dasgupta](https://github.com/debasrid)
+ */
 import React from 'react'
 
 export default function CurrencyAddButton(props) {
