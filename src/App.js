@@ -187,8 +187,8 @@ function App() {
         <h1>Currency Converter</h1>
 
         <DateSelection selectedDate={selectedDate}
-          onChangeDateInput={e => setSelectedDate(e.target.value)
-          }
+          onChangeDateInput={e => setSelectedDate(e.target.value)}
+          dateSelection={selectedDate}
         />
 
         <CurrencyInput currencyList={currencyList}

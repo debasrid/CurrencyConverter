@@ -13,7 +13,7 @@ export default function CurrencyAddButton(props) {
     }= props
     return (
         <div className="addbtn">
-            <button value={addCurrencyClicked} onClick={onClickedCurrencyBtn}>Add Currency</button>
+            <button value={addCurrencyClicked} onClick={onClickedCurrencyBtn}>ADD CURRENCY</button>
         </div>
     )
 }

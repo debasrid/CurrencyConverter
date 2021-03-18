@@ -56,3 +56,10 @@ h1{
 select{
   margin-left: 1rem;
 }
+
+button{
+  width:100%;
+  background-color:rgb(107, 165, 32) ;
+  padding:.5rem 0 .5rem 0;
+  font-weight: bold;
+}
